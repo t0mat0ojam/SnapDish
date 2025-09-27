@@ -1,3 +1,4 @@
 import { registerRootComponent } from 'expo';
-import Preferences from './Preferences';
-registerRootComponent(Preferences);
+import App from './Preferences'; // <- change this to point to your main file
+
+registerRootComponent(App);
