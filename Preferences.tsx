@@ -1,21 +1,11 @@
 import React, { useState } from 'react';
-import {
-  ScrollView,
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  TextInput,
-  FlatList,
-} from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Ionicons } from '@expo/vector-icons';
+import { ScrollView, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 
-const Stack = createNativeStackNavigator();
+interface PreferencesProps {
+  navigation: any;
+}
 
-// ------------------- Preferences Screen -------------------
-function PreferenceScreen({ navigation }: any) {
+export default function PreferenceScreen({ navigation }: PreferencesProps) {
   const [diet, setDiet] = useState<string | null>(null);
   const [allergies, setAllergies] = useState<string[]>([]);
   const [cuisines, setCuisines] = useState<string[]>([]);
@@ -29,6 +19,15 @@ function PreferenceScreen({ navigation }: any) {
   const toggleSelection = (value: string, stateArray: string[], setState: Function) => {
     if (stateArray.includes(value)) setState(stateArray.filter(v => v !== value));
     else setState([...stateArray, value]);
+  };
+
+  const handleNext = () => {
+    navigation.navigate('Camera', {
+      diet,
+      allergies,
+      cuisines,
+      tools,
+    });
   };
 
   return (
@@ -88,99 +87,13 @@ function PreferenceScreen({ navigation }: any) {
         ))}
       </View>
 
-      <TouchableOpacity style={styles.nextButton} onPress={() => navigation.navigate('Home')}>
+      <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
         <Text style={styles.nextButtonText}>Next</Text>
       </TouchableOpacity>
     </ScrollView>
   );
 }
 
-// ------------------- Home Screen -------------------
-const HomeScreen = () => {
-  const [query, setQuery] = useState('');
-  const [selectedIngredients, setSelectedIngredients] = useState<string[]>([]);
-
-  const allIngredients = [
-    'Onion', 'Garlic', 'Tomato', 'Carrot', 'Potato', 'Broccoli',
-    'Spinach', 'Chicken', 'Beef', 'Eggs', 'Pork', 'Fish', 'Shrimp',
-    'Rice', 'Pasta', 'Cheese', 'Milk', 'Bread',
-  ];
-
-  const filtered = query.length > 0
-    ? allIngredients.filter(item =>
-        item.toLowerCase().includes(query.toLowerCase()) &&
-        !selectedIngredients.includes(item)
-      )
-    : [];
-
-  const addIngredient = (item: string) => {
-    setSelectedIngredients([...selectedIngredients, item]);
-    setQuery('');
-  };
-
-  return (
-    <View style={styles.container}>
-      {/* Camera Placeholder */}
-      <View style={styles.cameraPreview}>
-        <Text style={{ color: '#666' }}>📷 Camera Preview (placeholder)</Text>
-      </View>
-
-      {/* Camera button */}
-      <View style={styles.shutterContainer}>
-        <TouchableOpacity style={styles.shutterButton}>
-          <Ionicons name="camera" size={36} color="#fff" />
-        </TouchableOpacity>
-      </View>
-
-      {/* Manual entry with autocomplete */}
-      <View style={styles.manualEntry}>
-        <TextInput
-          style={styles.searchBar}
-          placeholder="Type ingredient..."
-          value={query}
-          onChangeText={setQuery}
-        />
-        {filtered.length > 0 && (
-          <FlatList
-            data={filtered}
-            keyExtractor={(item) => item}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={styles.suggestionItem}
-                onPress={() => addIngredient(item)}
-              >
-                <Text>{item}</Text>
-              </TouchableOpacity>
-            )}
-          />
-        )}
-
-        {/* Selected ingredient tags */}
-        <View style={styles.tagsContainer}>
-          {selectedIngredients.map((item, idx) => (
-            <View key={idx} style={styles.tag}>
-              <Text style={styles.tagText}>{item}</Text>
-            </View>
-          ))}
-        </View>
-      </View>
-    </View>
-  );
-};
-
-// ------------------- App Navigation -------------------
-export default function App() {
-  return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Preferences">
-        <Stack.Screen name="Preferences" component={PreferenceScreen} />
-        <Stack.Screen name="Home" component={HomeScreen} />
-      </Stack.Navigator>
-    </NavigationContainer>
-  );
-}
-
-// ------------------- Styles -------------------
 const styles = StyleSheet.create({
   scrollContainer: { padding: 20, paddingBottom: 50, backgroundColor: '#F8F5F0' },
   title: { fontSize: 28, fontWeight: 'bold', marginBottom: 5, color: '#FF6B00' },
@@ -197,16 +110,4 @@ const styles = StyleSheet.create({
   dropdownTextSelected: { color: '#fff', fontWeight: '600' },
   nextButton: { marginTop: 30, backgroundColor: '#FF6B00', paddingVertical: 15, borderRadius: 12, alignItems: 'center' },
   nextButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-
-  // Home screen
-  container: { flex: 1, backgroundColor: '#F8F5F0', padding: 20 },
-  cameraPreview: { flex: 3, backgroundColor: '#ddd', justifyContent: 'center', alignItems: 'center', borderRadius: 12 },
-  shutterContainer: { alignItems: 'center', marginVertical: 20 },
-  shutterButton: { width: 70, height: 70, borderRadius: 35, backgroundColor: '#FF6B00', justifyContent: 'center', alignItems: 'center' },
-  manualEntry: { flex: 2 },
-  searchBar: { backgroundColor: '#fff', padding: 12, borderRadius: 12, borderWidth: 1, borderColor: '#ddd', marginBottom: 10 },
-  suggestionItem: { padding: 10, borderBottomWidth: 1, borderBottomColor: '#eee' },
-  tagsContainer: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 10 },
-  tag: { backgroundColor: '#FF6B00', paddingVertical: 6, paddingHorizontal: 10, borderRadius: 20, margin: 4 },
-  tagText: { color: '#fff', fontWeight: '600' },
 });
