@@ -4,7 +4,7 @@ import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from 'rea
 import { useNavigation, useRoute } from '@react-navigation/native';
 import * as ImageManipulator from 'expo-image-manipulator';
 
-const HUGGINGFACE_TOKEN = 'REMOVED_TOKEN'; // Replace with your token
+const HUGGINGFACE_TOKEN = 'placeholder'; // Replace with your token
 
 export default function ImageScreen() {
   const navigation = useNavigation<any>();
