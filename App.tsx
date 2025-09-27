@@ -4,7 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import PreferenceScreen from './Preferences';
 import CameraScreen from './camera';
 import ImageScreen from './Image';
-import IngredientsScreen from './Ingredients';
+import IngredientsScreen from './ingredients';
 
 const Stack = createNativeStackNavigator();
 

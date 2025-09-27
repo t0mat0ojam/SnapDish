@@ -2,14 +2,16 @@
 import React, { useState } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import * as FileSystem from 'expo-file-system';
+import * as ImageManipulator from 'expo-image-manipulator';
+
+const HUGGINGFACE_TOKEN = 'REMOVED_TOKEN'; // Replace with your token
 
 export default function ImageScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const { imageUri } = route.params || {};
 
-  const [ingredients, setIngredients] = useState<{ name: string; quantity: string }[]>([]);
+  const [ingredients, setIngredients] = useState<{ name: string; confidence: number }[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasAnalyzed, setHasAnalyzed] = useState(false);
 
@@ -19,30 +21,48 @@ export default function ImageScreen() {
     setHasAnalyzed(true);
 
     try {
-      const base64 = await FileSystem.readAsStringAsync(imageUri, { encoding: 'base64' });
+      const resized = await ImageManipulator.manipulateAsync(
+        imageUri,
+        [{ resize: { width: 512 } }],
+        { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+      );
 
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer YOUR_OPENAI_API_KEY`,
-        },
-        body: JSON.stringify({
-          model: 'gpt-4.1-mini',
-          messages: [
-            {
-              role: 'user',
-              content: `Analyze this image and list all food ingredients including type and approximate volume/quantity. Respond as a JSON array of objects with "name" and "quantity". Here is the image in base64: ${base64}`,
-            },
-          ],
-        }),
-      });
+      const formData = new FormData();
+      formData.append('file', {
+        uri: resized.uri,
+        name: 'photo.jpg',
+        type: 'image/jpeg',
+      } as any);
 
-      const data = await response.json();
-      const text = data.choices[0].message.content;
+      const response = await fetch(
+        'https://api-inference.huggingface.co/models/sayfeldinn/AI-Food-Detector',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${HUGGINGFACE_TOKEN}`,
+          },
+          body: formData,
+        }
+      );
 
-      const parsed: { name: string; quantity: string }[] = JSON.parse(text);
-      setIngredients(parsed);
+      const text = await response.text(); // read as text first
+      let data: any[] = [];
+
+      try {
+        data = JSON.parse(text); // parse JSON
+      } catch {
+        console.log('Response is not JSON:', text);
+      }
+
+      if (Array.isArray(data) && data.length > 0) {
+        const parsed = data.map((item: any) => ({
+          name: item.label,
+          confidence: item.score,
+        }));
+        setIngredients(parsed);
+      } else {
+        setIngredients([]);
+      }
     } catch (error) {
       console.log('Error analyzing image:', error);
       setIngredients([]);
@@ -76,7 +96,7 @@ export default function ImageScreen() {
           ingredients.length > 0 ? (
             ingredients.map((item, idx) => (
               <Text key={idx} style={styles.resultText}>
-                {item.name} - {item.quantity}
+                {item.name} ({(item.confidence * 100).toFixed(1)}%)
               </Text>
             ))
           ) : (
