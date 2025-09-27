@@ -1,4 +1,3 @@
-// App.tsx - Debug UI Version (No real camera yet)
 import React, { useState } from 'react';
 import {
   ScrollView,
@@ -96,16 +95,28 @@ function PreferenceScreen({ navigation }: any) {
   );
 }
 
-// ------------------- Home Screen (UI only, no real camera) -------------------
+// ------------------- Home Screen -------------------
 const HomeScreen = () => {
   const [query, setQuery] = useState('');
-  const [ingredients] = useState([
-    'Onion', 'Garlic', 'Tomato', 'Carrot', 'Potato', 'Broccoli', 'Spinach', 'Chicken', 'Beef', 'Eggs'
-  ]);
+  const [selectedIngredients, setSelectedIngredients] = useState<string[]>([]);
 
-  const filtered = ingredients.filter(item =>
-    item.toLowerCase().includes(query.toLowerCase())
-  );
+  const allIngredients = [
+    'Onion', 'Garlic', 'Tomato', 'Carrot', 'Potato', 'Broccoli',
+    'Spinach', 'Chicken', 'Beef', 'Eggs', 'Pork', 'Fish', 'Shrimp',
+    'Rice', 'Pasta', 'Cheese', 'Milk', 'Bread',
+  ];
+
+  const filtered = query.length > 0
+    ? allIngredients.filter(item =>
+        item.toLowerCase().includes(query.toLowerCase()) &&
+        !selectedIngredients.includes(item)
+      )
+    : [];
+
+  const addIngredient = (item: string) => {
+    setSelectedIngredients([...selectedIngredients, item]);
+    setQuery('');
+  };
 
   return (
     <View style={styles.container}>
@@ -129,17 +140,29 @@ const HomeScreen = () => {
           value={query}
           onChangeText={setQuery}
         />
-        {query.length > 0 && (
+        {filtered.length > 0 && (
           <FlatList
             data={filtered}
             keyExtractor={(item) => item}
             renderItem={({ item }) => (
-              <TouchableOpacity style={styles.suggestionItem}>
+              <TouchableOpacity
+                style={styles.suggestionItem}
+                onPress={() => addIngredient(item)}
+              >
                 <Text>{item}</Text>
               </TouchableOpacity>
             )}
           />
         )}
+
+        {/* Selected ingredient tags */}
+        <View style={styles.tagsContainer}>
+          {selectedIngredients.map((item, idx) => (
+            <View key={idx} style={styles.tag}>
+              <Text style={styles.tagText}>{item}</Text>
+            </View>
+          ))}
+        </View>
       </View>
     </View>
   );
@@ -183,4 +206,7 @@ const styles = StyleSheet.create({
   manualEntry: { flex: 2 },
   searchBar: { backgroundColor: '#fff', padding: 12, borderRadius: 12, borderWidth: 1, borderColor: '#ddd', marginBottom: 10 },
   suggestionItem: { padding: 10, borderBottomWidth: 1, borderBottomColor: '#eee' },
+  tagsContainer: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 10 },
+  tag: { backgroundColor: '#FF6B00', paddingVertical: 6, paddingHorizontal: 10, borderRadius: 20, margin: 4 },
+  tagText: { color: '#fff', fontWeight: '600' },
 });
